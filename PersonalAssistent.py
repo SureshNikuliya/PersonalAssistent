@@ -3,22 +3,16 @@ import datetime
 import speech_recognition as sr
 import webbrowser
 import os
-from tkinter import *
-
-"""
-#GUI
-_myWindow = Tk()
-_myWindow.title("Personal Assistent Nancy")
-Label(_myWindow, text="Say Hi Nancy to start commanding....", bg="#EEEEEE").pack()
-_myWindow.geometry("300x200+200+250")
-"""
-
-#Stop flag
-_stop = False
+import json
+import requests
 
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
 engine.setProperty('voice', voices[0].id)
+
+#Fetch config properties
+with open('config.json') as config_file:
+    properties = json.load(config_file)
 
 #Function to speak the text
 def speak(audio):   
@@ -42,7 +36,6 @@ def wishMe():
 def listen(state):
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        #Label(_myWindow, text="Listenning*****", bg="#EEEEEE").pack()
         print("Listenning....")
         r.pause_threshold = 2
         audio = r.listen(source)
@@ -66,6 +59,35 @@ def listen(state):
 
     return command
 
+def takeNotes():
+    header = "Notes taken on {0} at {1}".format(datetime.datetime.now().date(), datetime.datetime.now().time())
+    notes = header + '\n'
+    while True:
+        speak('Please speak the point to be noted!')
+        notes += '- ' + listen('takeCommands') + '\n'
+        speak('You want to add more points')
+        command = listen('takeCommands').lower()
+        if 'no' in command:
+            break
+        else:
+            continue
+
+    speak('You want to send the following point to slack')
+    print(notes)
+    message = {'text': notes}
+    while True:
+        command = listen('takeCommands').lower()
+        if 'yes' in command:
+            sendNotesToSlack(message)
+            break
+        elif 'no' in command:
+            break
+
+
+def sendNotesToSlack(notes):
+    requests.post(properties['web_hook_url'], data=json.dumps(notes))
+    speak('Successfully send notes to slack channel Personal Assistent')
+
 if __name__ == "__main__":
 #def startAssistent():
     while True:
@@ -73,6 +95,7 @@ if __name__ == "__main__":
         print(command)
 
         if 'stop' in command:
+            speak('Bye Bye, Have a good time with your love ones.')
             break
 
         if 'hi nancy' in command or 'nancy' in command:
@@ -81,52 +104,45 @@ if __name__ == "__main__":
             while True:
                 command = listen('takeCommands').lower()
                 _commandSuccess = False
+                print(command)
 
                 if 'stop' in command:
                     break
 
-                if 'open google' or 'open browser' in command:
+                elif ('open google' in command) or ('open browser' in command):
                     webbrowser.open('google.com')
                     _commandSuccess = True
                 
-                elif 'open eclipse' in command:
-                    _eclipsePath = 'C:\\Users\\SureshNikuliya\\eclipse\\java-2019-09\\eclipse\\eclipse.exe'
+                elif ('open eclipse' in command) or ('eclipse' in command):
+                    _eclipsePath = properties['eclipse_path']
                     os.startfile(_eclipsePath)
                     _commandSuccess = True
 
-                elif 'open slack' in command:
-                    _slackPath = 'C:\\Users\\SureshNikuliya\\AppData\\Local\\slack\\slack.exe'
+                elif ('open slack' in command) or ('slack' in command):
+                    _slackPath = properties['slack_path']
                     os.startfile(_slackPath)
+                    _commandSuccess = True
+
+                elif ('take notes' in command) or ('notes' in command):
+                    takeNotes()
                     _commandSuccess = True
                 
                 if _commandSuccess:
-                    speak('Anything else i can do for you. Suresh')
+                    _commandSuccess = False
+                    speak('Anything else i can do for you. {}'.format(properties['user']))
                     _askAgain = False
                     while True:
                         command = listen('takeCommands').lower()
-
                         if 'stop' in command:
                             break
-
                         if 'yes' in command:
                             _askAgain = True
                             break
-
                         elif 'no' in command:
                             _askAgain = False
                             break
 
                     if not _askAgain:
-                        speak('Okay Suresh')
+                        speak('Okay {}'.format(properties['user']))
                         speak('If you need anything Say HI NANCY')
                         break
-
-#_startButton = Button(_myWindow, text="Start", command = startAssistent).pack()
-#_myWindow.mainloop()
-             
-
-
-
-        
-        
-        
