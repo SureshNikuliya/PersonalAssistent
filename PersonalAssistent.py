@@ -3,7 +3,18 @@ import datetime
 import speech_recognition as sr
 import webbrowser
 import os
+from tkinter import *
 
+"""
+#GUI
+_myWindow = Tk()
+_myWindow.title("Personal Assistent Nancy")
+Label(_myWindow, text="Say Hi Nancy to start commanding....", bg="#EEEEEE").pack()
+_myWindow.geometry("300x200+200+250")
+"""
+
+#Stop flag
+_stop = False
 
 engine = pyttsx3.init()
 voices = engine.getProperty('voices')
@@ -31,7 +42,8 @@ def wishMe():
 def listen(state):
     r = sr.Recognizer()
     with sr.Microphone() as source:
-        print('Listening....')
+        #Label(_myWindow, text="Listenning*****", bg="#EEEEEE").pack()
+        print("Listenning....")
         r.pause_threshold = 2
         audio = r.listen(source)
     
@@ -39,7 +51,7 @@ def listen(state):
         try:
             print('Recognizing....')
             command = r.recognize_google(audio, language='en-in')
-        except Exception as e:
+        except Exception:
             print('Not able to Reconize the command. Can you say that again!!!!')
             return 'None'
 
@@ -48,16 +60,20 @@ def listen(state):
             speak('Recognizing....')
             command = r.recognize_google(audio, language='en-in')
 
-        except Exception as e:
+        except Exception:
             speak('Not able to Reconize the command. Can you say that again!!!!')
             return 'None'
 
     return command
 
 if __name__ == "__main__":
+#def startAssistent():
     while True:
         command = listen('startAssistent').lower()
         print(command)
+
+        if 'stop' in command:
+            break
 
         if 'hi nancy' in command or 'nancy' in command:
             wishMe()
@@ -65,7 +81,11 @@ if __name__ == "__main__":
             while True:
                 command = listen('takeCommands').lower()
                 _commandSuccess = False
-                if 'open google' in command:
+
+                if 'stop' in command:
+                    break
+
+                if 'open google' or 'open browser' in command:
                     webbrowser.open('google.com')
                     _commandSuccess = True
                 
@@ -84,9 +104,14 @@ if __name__ == "__main__":
                     _askAgain = False
                     while True:
                         command = listen('takeCommands').lower()
+
+                        if 'stop' in command:
+                            break
+
                         if 'yes' in command:
                             _askAgain = True
                             break
+
                         elif 'no' in command:
                             _askAgain = False
                             break
@@ -95,8 +120,9 @@ if __name__ == "__main__":
                         speak('Okay Suresh')
                         speak('If you need anything Say HI NANCY')
                         break
-                 
-            
+
+#_startButton = Button(_myWindow, text="Start", command = startAssistent).pack()
+#_myWindow.mainloop()
              
 
 
